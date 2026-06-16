@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Portal Lab — Protocole de Transformation</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Palette Portal Lab */
+  --void:#0A0E12;          /* fond principal très sombre */
+  --void2:#10161D;         /* surfaces */
+  --void3:#161E27;         /* surfaces élevées */
+  --grid:#1B2530;          /* lignes de grille */
+  --border:#243140;        /* bordures */
+  --border2:#2E3D4F;       /* bordures hover */
+  --portal:#97CE4C;        /* vert portail signature */
+  --portal-d:#6BA82F;      /* vert portail foncé */
+  --portal-dd:#4A7A1E;     /* vert très foncé */
+  --portal-glow:rgba(151,206,76,.35);
+  --cyan:#3FE0D0;          /* cyan plasma */
+  --cyan-d:#1B9D90;
+  --acid:#C8F751;          /* jaune acide */
+  --plasma:#E84A8A;        /* rose plasma (accent rare) */
+  --plasma-d:#B82E63;
+  --txt:#E4EDE4;           /* texte principal */
+  --txt2:#9DB0A8;          /* texte secondaire */
+  --txt3:#5E726B;          /* texte tertiaire */
+  --txt-portal:#B4E66C;    /* texte vert clair */
+  --amber:#F0A830;
+  --r:4px;--r-sm:3px;--r-lg:8px;
+  --fd:'Orbitron',sans-serif;       /* display tech */
+  --fb:'Space Grotesk',sans-serif;  /* body */
+  --fm:'JetBrains Mono',monospace;  /* données/mono */
+  --glow:0 0 20px var(--portal-glow);
+  --glow-cyan:0 0 16px rgba(63,224,208,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--fb);background:var(--void);color:var(--txt);
+  font-size:15px;line-height:1.6;min-height:100vh;
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:44px 44px;
+  background-position:center;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(151,206,76,.06),transparent 60%);
+}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:90;background:rgba(10,14,18,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;height:58px;gap:10px}
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.brand-orb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--cyan),var(--portal) 45%,var(--portal-dd) 100%);box-shadow:var(--glow);position:relative;animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brand-txt{font-family:var(--fd);font-size:14px;font-weight:700;letter-spacing:.06em;color:var(--txt);text-transform:uppercase}
+.brand-txt b{color:var(--portal)}
+.nav-tabs{display:flex;gap:3px;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.ntab{flex-shrink:0;font-family:var(--fm);font-size:11.5px;font-weight:500;padding:6px 12px;border-radius:var(--r);border:1px solid transparent;background:transparent;color:var(--txt3);cursor:pointer;transition:all .16s;white-space:nowrap;letter-spacing:.02em}
+.ntab:hover{background:var(--void3);color:var(--txt-portal);border-color:var(--border)}
+.ntab.on{background:var(--portal);color:var(--void);font-weight:700;box-shadow:var(--glow)}
+
+/* WEEK BAR */
+.wbar{background:var(--void2);border-bottom:1px solid var(--border);position:relative;z-index:5}
+.wbar-in{max-width:920px;margin:0 auto;padding:0 1.25rem;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;height:42px;align-items:center}
+.wbar-in::-webkit-scrollbar{display:none}
+.wtab{flex-shrink:0;font-family:var(--fm);font-size:11px;font-weight:500;padding:4px 13px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--txt3);cursor:pointer;transition:all .15s;letter-spacing:.03em;text-transform:uppercase}
+.wtab:hover{color:var(--txt-portal);border-color:var(--portal-dd)}
+.wtab.on{background:var(--portal-dd);color:var(--portal);border-color:var(--portal-d);box-shadow:inset 0 0 12px rgba(151,206,76,.15)}
+.wtab.future{opacity:.35;cursor:default}
+
+/* PAGES */
+.page{display:none;max-width:920px;margin:0 auto;padding:1.75rem 1.25rem 5rem;position:relative;z-index:1;animation:boot .3s ease}
+.page.on{display:block}
+@keyframes boot{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* HERO */
+.hero{margin-bottom:1.75rem;border-left:2px solid var(--portal);padding-left:14px}
+.eyebrow{font-family:var(--fm);font-size:10.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--portal);margin-bottom:7px}
+.htitle{font-family:var(--fd);font-size:clamp(22px,4.5vw,34px);font-weight:900;line-height:1.05;color:var(--txt);letter-spacing:.01em;text-transform:uppercase}
+.htitle i{font-style:normal;color:var(--portal);text-shadow:0 0 18px var(--portal-glow)}
+.hsub{font-family:var(--fm);font-size:12px;color:var(--txt2);margin-top:8px}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-bottom:1.75rem}
+.scard{background:var(--void2);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden}
+.scard::after{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:var(--portal);opacity:.5}
+.scard-l{font-family:var(--fm);font-size:9.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px}
+.scard-v{font-family:var(--fd);font-size:22px;font-weight:700;line-height:1;color:var(--txt)}
+.scard-s{font-family:var(--fm);font-size:10px;color:var(--txt3);margin-top:4px}
+.c-portal{color:var(--portal)!important}
+.c-cyan{color:var(--cyan)!important}
+.c-amber{color:var(--amber)!important}
+.c-plasma{color:var(--plasma)!important}
+
+/* DAY STRIP */
+.dstrip{display:flex;gap:6px;margin-bottom:1.25rem;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}
+.dstrip::-webkit-scrollbar{display:none}
+.dpill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 13px;border-radius:var(--r);border:1px solid var(--border);background:var(--void2);cursor:pointer;transition:all .15s;min-width:58px}
+.dpill:hover{border-color:var(--portal-dd);transform:translateY(-1px)}
+.dpill.on{background:var(--portal-dd);border-color:var(--portal);box-shadow:var(--glow)}
+.dpill.rest{border-style:dashed}
+.dp-n{font-family:var(--fm);font-size:11.5px;font-weight:700;color:var(--txt2);letter-spacing:.02em}
+.dp-d{font-family:var(--fm);font-size:9px;color:var(--txt3)}
+.dpill.on .dp-n{color:var(--portal)}
+.dpill.on .dp-d{color:var(--txt-portal)}
+.dp-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);margin-top:2px;transition:all .15s}
+.dpill.has-done .dp-dot{background:var(--portal);box-shadow:0 0 6px var(--portal)}
+
+/* DAY LAYOUT */
+.dlayout{display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start}
+@media(max-width:680px){.dlayout{grid-template-columns:1fr}}
+
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:3px}
+.trow{display:flex;gap:9px;align-items:flex-start}
+.ttime{width:38px;flex-shrink:0;font-family:var(--fm);font-size:10px;color:var(--txt3);text-align:right;padding-top:11px;font-variant-numeric:tabular-nums;font-weight:500}
+.tev{flex:1;border-radius:var(--r);padding:9px 11px;cursor:pointer;transition:all .14s;border:1px solid var(--border);background:var(--void2);display:flex;align-items:center;gap:9px;position:relative}
+.tev:hover{border-color:var(--portal-dd);transform:translateX(2px)}
+.tev.cat-line::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%;border-radius:var(--r) 0 0 var(--r)}
+.tev.has-note::after{content:'';position:absolute;top:6px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.tic{font-size:15px;flex-shrink:0;width:20px;text-align:center}
+.tb{flex:1;min-width:0}
+.tn{font-size:12.5px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr{font-family:var(--fm);font-size:10px;margin-top:1px;color:var(--txt3)}
+.td{font-family:var(--fm);font-size:10px;flex-shrink:0;padding-left:4px;color:var(--txt3);font-weight:500}
+.tchk{width:20px;height:20px;border-radius:var(--r-sm);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;transition:all .14s;cursor:pointer;background:var(--void3);color:var(--portal)}
+.tchk:hover{border-color:var(--portal);background:rgba(151,206,76,.1)}
+.tchk.on{background:var(--portal);border-color:var(--portal);color:var(--void);box-shadow:0 0 10px var(--portal-glow)}
+
+/* DETAIL */
+.detail{background:var(--void2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;position:sticky;top:108px;min-height:200px;overflow:hidden}
+.detail::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--portal),var(--cyan),transparent)}
+.d-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;gap:12px;color:var(--txt3);font-family:var(--fm);font-size:12px;text-align:center}
+.d-empty-ic{font-size:32px;filter:grayscale(.3)}
+.d-cat{font-family:var(--fm);font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px}
+.d-ic{font-size:26px;margin-bottom:8px;display:block}
+.d-title{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--txt);margin-bottom:4px;line-height:1.2;text-transform:uppercase;letter-spacing:.01em}
+.d-time{font-family:var(--fm);font-size:11px;color:var(--txt3);margin-bottom:11px}
+.d-sep{height:1px;background:var(--border);margin:10px 0}
+.d-lbl{font-family:var(--fm);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--portal);margin-bottom:5px}
+.d-txt{font-size:12px;color:var(--txt2);line-height:1.65}
+.d-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.d-tag{font-family:var(--fm);font-size:9.5px;padding:3px 8px;border-radius:var(--r-sm);background:var(--void3);color:var(--txt-portal);border:1px solid var(--border)}
+.note-area{width:100%;min-height:88px;font-family:var(--fb);font-size:12px;line-height:1.6;color:var(--txt);background:var(--void);border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;resize:vertical;transition:border-color .15s;outline:none;margin-top:2px}
+.note-area:focus{border-color:var(--portal)}
+.note-area::placeholder{color:var(--txt3)}
+.note-state{font-family:var(--fm);font-size:9.5px;color:var(--portal);margin-top:5px;height:13px;opacity:0;transition:opacity .3s}
+.note-state.show{opacity:1}
+
+/* ===== SUMMARY / STATS ===== */
+.panel{background:var(--void2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.5rem;margin-bottom:1.25rem;position:relative;overflow:hidden}
+.panel-glow::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--portal),var(--cyan),transparent)}
+.phead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
+.ptitle{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.02em}
+.pbadge{font-family:var(--fm);font-size:10.5px;font-weight:700;padding:4px 11px;border-radius:var(--r);background:var(--portal-dd);color:var(--portal);border:1px solid var(--portal-d)}
+
+/* RING */
+.ringrow{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.ring{position:relative;width:104px;height:104px;flex-shrink:0}
+.ring svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--void3);stroke-width:7}
+.ring-fl{fill:none;stroke:var(--portal);stroke-width:7;stroke-linecap:round;filter:drop-shadow(0 0 6px var(--portal-glow));transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)}
+.ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--portal)}
+.ring-sub{font-family:var(--fm);font-size:9px;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase}
+.ringinfo{flex:1;min-width:170px}
+.riline{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+.riline:last-child{border:none}
+.ri-l{color:var(--txt2);font-family:var(--fm);font-size:11.5px}
+.ri-v{font-weight:700;color:var(--txt);font-family:var(--fm)}
+
+/* CAT BARS */
+.catbars{display:flex;flex-direction:column;gap:11px}
+.cbrow{display:flex;align-items:center;gap:10px}
+.cb-i{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.cb-info{flex:1;min-width:0}
+.cb-n{font-size:12px;font-weight:600;color:var(--txt);margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;font-family:var(--fm)}
+.cb-c{font-family:var(--fm);font-size:10px;color:var(--txt3);font-weight:400}
+.cb-track{height:6px;background:var(--void3);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.cb-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+/* HEATMAP */
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:1rem}
+.hday{display:flex;flex-direction:column;align-items:center;gap:4px}
+.hlbl{font-family:var(--fm);font-size:9.5px;color:var(--txt3);font-weight:500}
+.hcell{width:100%;aspect-ratio:1;border-radius:var(--r-sm);transition:all .2s;border:1px solid var(--border)}
+.hcell.l0{background:var(--void3)}
+.hcell.l1{background:rgba(151,206,76,.25)}
+.hcell.l2{background:rgba(151,206,76,.5)}
+.hcell.l3{background:rgba(151,206,76,.75)}
+.hcell.l4{background:var(--portal);box-shadow:0 0 8px var(--portal-glow)}
+.hval{font-family:var(--fm);font-size:9px;color:var(--txt3)}
+
+/* WEEK CARDS */
+.histsec{margin-top:1.25rem}
+.hstitle{font-family:var(--fm);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:.75rem}
+.wkcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.wkcard{background:var(--void2);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
+.wkcard:hover{border-color:var(--portal-dd)}
+.wkcard.cur{border-color:var(--portal);box-shadow:inset 0 0 16px rgba(151,206,76,.08)}
+.wk-w{font-family:var(--fm);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px}
+.wk-p{font-family:var(--fd);font-size:26px;font-weight:900;color:var(--portal)}
+.wk-bar{height:4px;background:var(--void3);border-radius:2px;margin:7px 0;overflow:hidden}
+.wk-fl{height:100%;border-radius:2px;background:var(--portal)}
+.wk-d{font-family:var(--fm);font-size:10.5px;color:var(--txt3)}
+
+/* NOTES RECAP */
+.nrecap{display:flex;flex-direction:column;gap:9px}
+.ncard{background:var(--void3);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;border-left:2px solid var(--cyan)}
+.nc-h{display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap}
+.nc-day{font-family:var(--fm);font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--cyan);background:rgba(63,224,208,.1);padding:2px 8px;border-radius:var(--r-sm)}
+.nc-t{font-family:var(--fm);font-size:10px;color:var(--txt3)}
+.nc-n{font-size:12px;font-weight:600;color:var(--txt)}
+.nc-txt{font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap}
+.empty{text-align:center;padding:2rem;color:var(--txt3);font-family:var(--fm);font-size:12px}
+
+/* ===== PROJETS ===== */
+.proj-hero{background:linear-gradient(135deg,var(--void2),var(--void3));border:1px solid var(--portal-dd);border-radius:var(--r-lg);padding:1.5rem;margin-bottom:1.25rem;position:relative;overflow:hidden}
+.proj-hero::after{content:'⚡';position:absolute;top:-10px;right:-5px;font-size:90px;opacity:.04}
+.proj-status{display:inline-flex;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--portal);background:var(--portal-dd);padding:4px 11px;border-radius:var(--r);border:1px solid var(--portal-d);margin-bottom:12px}
+.proj-status .dot{width:6px;height:6px;border-radius:50%;background:var(--portal);box-shadow:0 0 6px var(--portal);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.proj-name{font-family:var(--fd);font-size:20px;font-weight:900;text-transform:uppercase;color:var(--txt);letter-spacing:.01em;margin-bottom:6px}
+.proj-desc{font-size:13px;color:var(--txt2);max-width:540px;line-height:1.6}
+.proj-prog{margin-top:1rem}
+.proj-prog-bar{height:8px;background:var(--void);border-radius:4px;overflow:hidden;border:1px solid var(--border);margin-top:6px}
+.proj-prog-fl{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--portal-d),var(--portal));box-shadow:0 0 12px var(--portal-glow);transition:width .8s cubic-bezier(.4,0,.2,1)}
+.proj-prog-lbl{display:flex;justify-content:space-between;font-family:var(--fm);font-size:11px;color:var(--txt3)}
+
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:flex-start;gap:12px;background:var(--void2);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;transition:all .15s;cursor:pointer}
+.step:hover{border-color:var(--portal-dd)}
+.step.done{border-color:var(--portal-d);background:rgba(151,206,76,.04)}
+.step-chk{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:13px;color:var(--portal);margin-top:1px}
+.step.done .step-chk{background:var(--portal);border-color:var(--portal);color:var(--void);box-shadow:0 0 10px var(--portal-glow)}
+.step-body{flex:1;min-width:0}
+.step-num{font-family:var(--fm);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--portal);margin-bottom:3px}
+.step-name{font-size:13.5px;font-weight:600;color:var(--txt);margin-bottom:3px}
+.step.done .step-name{color:var(--txt2);text-decoration:line-through;text-decoration-color:var(--portal-dd)}
+.step-desc{font-size:11.5px;color:var(--txt3);line-height:1.5}
+.step-wk{font-family:var(--fm);font-size:9.5px;color:var(--cyan);margin-top:4px}
+
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:.5rem}
+.mat{background:var(--void2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .15s}
+.mat:hover{border-color:var(--portal-dd)}
+.mat.got{border-color:var(--portal-d)}
+.mat-chk{width:18px;height:18px;border-radius:var(--r-sm);border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--portal);transition:all .15s}
+.mat.got .mat-chk{background:var(--portal);border-color:var(--portal);color:var(--void)}
+.mat-info{flex:1;min-width:0}
+.mat-n{font-size:12px;font-weight:500;color:var(--txt)}
+.mat-p{font-family:var(--fm);font-size:10px;color:var(--txt3)}
+
+/* PROJET — carnet libre */
+.proj-add{background:var(--void2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:1rem}
+.proj-add-input{width:100%;font-family:var(--fb);font-size:14px;font-weight:600;color:var(--txt);background:var(--void);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;outline:none;transition:border-color .15s}
+.proj-add-input:focus{border-color:var(--portal)}
+.proj-add-input::placeholder{color:var(--txt3);font-weight:400}
+.proj-add-note{width:100%;font-family:var(--fb);font-size:12.5px;color:var(--txt);background:var(--void);border:1px solid var(--border2);border-radius:var(--r);padding:9px 12px;outline:none;resize:vertical;min-height:54px;margin-top:8px;transition:border-color .15s}
+.proj-add-note:focus{border-color:var(--portal)}
+.proj-add-note::placeholder{color:var(--txt3)}
+.proj-add-btn{margin-top:10px;width:100%;font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--void);background:var(--portal);border:none;border-radius:var(--r);padding:10px;cursor:pointer;transition:all .15s;box-shadow:var(--glow)}
+.proj-add-btn:hover{background:var(--acid)}
+.proj-add-btn:active{transform:scale(.99)}
+.proj-items{display:flex;flex-direction:column;gap:8px}
+.proj-item{display:flex;align-items:flex-start;gap:12px;background:var(--void2);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;transition:border-color .15s}
+.proj-item:hover{border-color:var(--border2)}
+.proj-item.done{border-color:var(--portal-d);background:rgba(151,206,76,.04)}
+.pi-chk{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:13px;color:var(--portal);margin-top:1px;cursor:pointer}
+.pi-chk:hover{border-color:var(--portal)}
+.proj-item.done .pi-chk{background:var(--portal);border-color:var(--portal);color:var(--void);box-shadow:0 0 10px var(--portal-glow)}
+.pi-body{flex:1;min-width:0}
+.pi-title{font-size:13.5px;font-weight:600;color:var(--txt);line-height:1.35;outline:none;border-radius:var(--r-sm);padding:1px 3px;margin:-1px -3px;transition:background .15s}
+.pi-title:focus{background:var(--void);box-shadow:0 0 0 1px var(--portal)}
+.proj-item.done .pi-title{color:var(--txt2);text-decoration:line-through;text-decoration-color:var(--portal-dd)}
+.pi-note{font-size:12px;color:var(--txt2);line-height:1.55;margin-top:5px;outline:none;border-radius:var(--r-sm);padding:2px 3px;white-space:pre-wrap;transition:background .15s}
+.pi-note:focus{background:var(--void);box-shadow:0 0 0 1px var(--portal)}
+.pi-note:empty::before{content:attr(data-ph);color:var(--txt3)}
+.pi-note-add{font-family:var(--fm);font-size:10.5px;color:var(--txt3);margin-top:5px;cursor:pointer;transition:color .15s;display:inline-block}
+.pi-note-add:hover{color:var(--portal)}
+.pi-meta{font-family:var(--fm);font-size:9.5px;color:var(--txt3);margin-top:6px}
+.pi-del{background:transparent;border:none;color:var(--txt3);font-size:14px;cursor:pointer;flex-shrink:0;padding:2px 5px;border-radius:var(--r-sm);transition:all .15s;line-height:1}
+.pi-del:hover{color:var(--plasma);background:rgba(232,74,138,.1)}
+
+/* PROJETS — sélecteur statut & cartes */
+.np-status-pick{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.np-st{font-family:var(--fm);font-size:11px;font-weight:600;padding:7px 12px;border-radius:var(--r);border:1px solid var(--border2);background:var(--void);color:var(--txt3);cursor:pointer;transition:all .15s}
+.np-st:hover{border-color:var(--portal-dd);color:var(--txt2)}
+.np-st.on{border-color:var(--portal);color:var(--portal);background:rgba(151,206,76,.1)}
+.proj-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px}
+.pcard{background:var(--void2);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px;cursor:pointer;transition:all .16s;position:relative;overflow:hidden}
+.pcard:hover{border-color:var(--portal-dd);transform:translateY(-2px)}
+.pcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pcard-badge{font-family:var(--fm);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:var(--r);border:1px solid currentColor}
+.pcard-del{background:transparent;border:none;color:var(--txt3);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:var(--r-sm);transition:all .15s;line-height:1}
+.pcard-del:hover{color:var(--plasma);background:rgba(232,74,138,.1)}
+.pcard-name{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.01em;line-height:1.2;margin-bottom:6px}
+.pcard-desc{font-size:12px;color:var(--txt2);line-height:1.5;margin-bottom:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pcard-prog{display:flex;align-items:center;gap:9px;margin-top:11px}
+.pcard-prog-bar{flex:1;height:5px;background:var(--void3);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.pcard-prog-fl{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.pcard-prog-txt{font-family:var(--fm);font-size:10.5px;color:var(--txt3);font-weight:600;flex-shrink:0}
+.pcard-empty{font-family:var(--fm);font-size:10.5px;color:var(--txt3);margin-top:8px}
+.pback{font-family:var(--fm);font-size:11.5px;font-weight:600;color:var(--txt2);background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:7px 14px;cursor:pointer;transition:all .15s;margin-bottom:1rem}
+.pback:hover{border-color:var(--portal);color:var(--portal)}
+.pdetail-statusrow{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.pst-pill{font-family:var(--fm);font-size:11px;font-weight:600;padding:5px 11px;border-radius:var(--r);border:1px solid var(--border2);background:var(--void);color:var(--txt3);cursor:pointer;transition:all .15s}
+.pst-pill:hover{color:var(--txt2);border-color:var(--portal-dd)}
+.proj-name[contenteditable]{outline:none;border-radius:var(--r-sm);padding:2px 5px;margin:-2px -5px;transition:background .15s}
+.proj-name[contenteditable]:focus{background:var(--void);box-shadow:0 0 0 1px var(--portal)}
+.proj-desc[contenteditable]{outline:none;border-radius:var(--r-sm);padding:2px 5px;margin:4px -5px 0;transition:background .15s;min-height:20px}
+.proj-desc[contenteditable]:focus{background:var(--void);box-shadow:0 0 0 1px var(--portal)}
+.proj-desc[contenteditable]:empty::before{content:attr(data-ph);color:var(--txt3)}
+
+/* ===== ROADMAP 5 PILIERS ===== */
+.obj-banner{background:linear-gradient(135deg,var(--void3),var(--void2));border:1px solid var(--portal-dd);border-radius:var(--r-lg);padding:1.75rem 1.5rem;margin-bottom:1.5rem;text-align:center;position:relative;overflow:hidden}
+.obj-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(151,206,76,.1),transparent 70%);pointer-events:none}
+.obj-label{font-family:var(--fm);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--portal);margin-bottom:10px;position:relative}
+.obj-title{font-family:var(--fd);font-size:clamp(18px,4vw,26px);font-weight:900;text-transform:uppercase;color:var(--txt);line-height:1.15;letter-spacing:.01em;position:relative}
+.obj-title i{font-style:normal;color:var(--portal);text-shadow:0 0 20px var(--portal-glow)}
+.obj-meter{margin-top:1.25rem;position:relative}
+.obj-meter-bar{height:10px;background:var(--void);border-radius:5px;overflow:hidden;border:1px solid var(--border);position:relative}
+.obj-meter-fl{height:100%;background:linear-gradient(90deg,var(--portal-dd),var(--portal),var(--cyan));box-shadow:0 0 16px var(--portal-glow);transition:width 1s cubic-bezier(.4,0,.2,1);border-radius:5px}
+.obj-meter-txt{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--portal);margin-top:8px}
+
+.pillar{background:var(--void2);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.pillar.unlocked{border-color:var(--portal-dd)}
+.pillar-head{display:flex;align-items:center;gap:13px;padding:15px 17px;cursor:pointer;transition:background .15s}
+.pillar-head:hover{background:var(--void3)}
+.pillar-num{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--void3);flex-shrink:0;width:38px;text-align:center;transition:color .2s;-webkit-text-stroke:1px var(--border2)}
+.pillar.unlocked .pillar-num{color:var(--portal);-webkit-text-stroke:0;text-shadow:0 0 14px var(--portal-glow)}
+.pillar-info{flex:1;min-width:0}
+.pillar-name{font-family:var(--fd);font-size:13.5px;font-weight:700;text-transform:uppercase;color:var(--txt);letter-spacing:.01em;line-height:1.2}
+.pillar-sub{font-family:var(--fm);font-size:10.5px;color:var(--txt3);margin-top:3px}
+.pillar-meta{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pillar-prog{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--portal)}
+.pillar-chev{color:var(--txt3);transition:transform .2s;font-size:14px}
+.pillar.open .pillar-chev{transform:rotate(90deg)}
+.pillar-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.pillar.open .pillar-body{max-height:800px}
+.pillar-body-in{padding:0 17px 15px 17px}
+.dom{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border)}
+.dom-chk{width:18px;height:18px;border-radius:var(--r-sm);border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--portal);cursor:pointer;transition:all .15s}
+.dom-chk:hover{border-color:var(--portal)}
+.dom-chk.on{background:var(--portal);border-color:var(--portal);color:var(--void)}
+.dom-n{flex:1;font-size:12px;color:var(--txt2)}
+.dom-n.done{color:var(--txt3);text-decoration:line-through;text-decoration-color:var(--portal-dd)}
+.dom-tag{font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:var(--r-sm);background:var(--void3);color:var(--txt3);border:1px solid var(--border);flex-shrink:0}
+.dom-tag.now{color:var(--portal);border-color:var(--portal-dd);background:var(--portal-dd)}
+
+/* MONTH STATS */
+.month-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+@media(max-width:560px){.month-grid{grid-template-columns:1fr}}
+.bigstat{background:var(--void2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;position:relative;overflow:hidden}
+.bigstat::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.bigstat.g1::after{background:var(--portal)}
+.bigstat.g2::after{background:var(--cyan)}
+.bigstat.g3::after{background:var(--amber)}
+.bigstat.g4::after{background:var(--plasma)}
+.bs-l{font-family:var(--fm);font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--txt3);margin-bottom:8px}
+.bs-v{font-family:var(--fd);font-size:30px;font-weight:900;line-height:1}
+.bs-s{font-family:var(--fm);font-size:11px;color:var(--txt3);margin-top:6px}
+.month-weeks{display:flex;flex-direction:column;gap:10px;margin-top:.5rem}
+.mw-row{display:flex;align-items:center;gap:12px}
+.mw-lbl{font-family:var(--fm);font-size:11px;font-weight:700;color:var(--txt2);width:64px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em}
+.mw-track{flex:1;height:22px;background:var(--void3);border-radius:var(--r);overflow:hidden;border:1px solid var(--border);position:relative}
+.mw-fill{height:100%;background:linear-gradient(90deg,var(--portal-dd),var(--portal));border-radius:var(--r);transition:width .8s cubic-bezier(.4,0,.2,1);min-width:2px}
+.mw-pct{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--fm);font-size:10.5px;font-weight:700;color:var(--txt)}
+.mw-empty-txt{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-family:var(--fm);font-size:10px;color:var(--txt3)}
+
+/* TOAST */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--portal);color:var(--void);font-family:var(--fm);font-size:12px;font-weight:700;padding:10px 22px;border-radius:var(--r);z-index:300;transition:transform .28s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;box-shadow:var(--glow);letter-spacing:.02em}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.sec-h{font-family:var(--fm);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin:1.5rem 0 .75rem}
+
+@media(max-width:480px){
+  .stats{grid-template-columns:1fr 1fr}
+  .ring{width:92px;height:92px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-orb"></div>
+      <div class="brand-txt">Portal<b>Lab</b></div>
+    </div>
+    <div class="nav-tabs">
+      <button class="ntab on" onclick="showTab('planning',this)">Protocole</button>
+      <button class="ntab" onclick="showTab('stats',this)">Analyse</button>
+      <button class="ntab" onclick="showTab('month',this)">Cycle</button>
+      <button class="ntab" onclick="showTab('projets',this)">Projets</button>
+      <button class="ntab" onclick="showTab('roadmap',this)">Mission</button>
+    </div>
+  </div>
+</nav>
+
+<div class="wbar"><div class="wbar-in" id="wbar"></div></div>
+
+<!-- PROTOCOLE (planning) -->
+<div class="page on" id="tab-planning">
+  <div class="hero">
+    <div class="eyebrow">// Protocole d'entraînement actif</div>
+    <div class="htitle">Plan de la <i>semaine</i></div>
+    <div class="hsub" id="p-sub">&gt; Sélection du cycle...</div>
+  </div>
+  <div class="stats" id="p-stats"></div>
+  <div class="dstrip" id="dstrip"></div>
+  <div class="dlayout">
+    <div class="timeline" id="timeline"></div>
+    <div class="detail" id="detail">
+      <div class="d-empty"><div class="d-empty-ic">⚗️</div><div>&gt; Sélectionne un créneau<br>pour charger le protocole</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYSE (stats semaine) -->
+<div class="page" id="tab-stats">
+  <div class="hero">
+    <div class="eyebrow">// Analyse de performance</div>
+    <div class="htitle">Données <i>semaine</i></div>
+    <div class="hsub">&gt; Calcul automatique depuis tes validations</div>
+  </div>
+  <div id="stats-content"></div>
+</div>
+
+<!-- CYCLE (stats mois) -->
+<div class="page" id="tab-month">
+  <div class="hero">
+    <div class="eyebrow">// Vue d'ensemble du cycle</div>
+    <div class="htitle">Cycle <i>mensuel</i></div>
+    <div class="hsub">&gt; Agrégation des 4 semaines du protocole</div>
+  </div>
+  <div id="month-content"></div>
+</div>
+
+<!-- BUILD_01 (tirelire) -->
+<div class="page" id="tab-projets">
+  <div class="hero">
+    <div class="eyebrow">// Laboratoire de projets</div>
+    <div class="htitle">Mes <i>projets</i></div>
+    <div class="hsub">&gt; Tes inventions, builds et expériences — du concept à la réalisation</div>
+  </div>
+  <div id="projets-content"></div>
+</div>
+
+<!-- MISSION (roadmap piliers) -->
+<div class="page" id="tab-roadmap">
+  <div class="hero">
+    <div class="eyebrow">// Objectif interdimensionnel</div>
+    <div class="htitle">La <i>Mission</i></div>
+    <div class="hsub">&gt; 5 piliers · 25 domaines · 1 IA autonome à construire</div>
+  </div>
+  <div id="roadmap-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* ═══ PORTAL LAB — Protocole de Transformation ═══ */
+const SK='portallab_v1';
+let S={done:{},notes:{},steps:{},mats:{},doms:{},projects:[],cur:{w:0,d:0},pcur:null};
+try{const r=localStorage.getItem(SK);if(r)S={...S,...JSON.parse(r)}}catch(e){}
+const save=()=>{try{localStorage.setItem(SK,JSON.stringify(S))}catch(e){}};
+
+/* CATEGORIES */
+const C={
+  sleep:{l:'Sommeil',bg:'#10161D',br:'#243140',tx:'#5E8AC0',ico:'🌙'},
+  trade:{l:'Trading',bg:'#10161D',br:'#243140',tx:'#3FE0D0',ico:'📈'},
+  med:{l:'Méditation',bg:'#10161D',br:'#243140',tx:'#7FD49A',ico:'🌿'},
+  sport:{l:'Sport',bg:'#10161D',br:'#243140',tx:'#B89AEC',ico:'🏃'},
+  piano:{l:'Piano',bg:'#10161D',br:'#243140',tx:'#EC93C0',ico:'🎹'},
+  sci:{l:'Sciences',bg:'#10161D',br:'#243140',tx:'#F0C060',ico:'⚛️'},
+  lang:{l:'Langues',bg:'#10161D',br:'#243140',tx:'#F0A870',ico:'🌍'},
+  creat:{l:'Création',bg:'#10161D',br:'#243140',tx:'#F09080',ico:'💡'},
+  cult:{l:'Culture',bg:'#10161D',br:'#243140',tx:'#7FD4B5',ico:'📚'},
+  read:{l:'Lecture',bg:'#10161D',br:'#243140',tx:'#B8ADEC',ico:'📖'},
+  law:{l:'Droit/Finance',bg:'#10161D',br:'#243140',tx:'#A8DA88',ico:'⚖️'},
+  dev:{l:'Dev perso',bg:'#10161D',br:'#243140',tx:'#F0CC78',ico:'🧠'},
+  ai:{l:'IA & Algèbre',bg:'#10161D',br:'#243140',tx:'#97CE4C',ico:'🧮'},
+  lowlevel:{l:'Prog. système',bg:'#10161D',br:'#243140',tx:'#3FE0D0',ico:'⚙️'},
+  taff:{l:'Taff',bg:'#10161D',br:'#243140',tx:'#8A9AA8',ico:'💼'},
+  meal:{l:'Repas',bg:'#0D1318',br:'#1B2530',tx:'#5E726B',ico:'🍽️'},
+  free:{l:'Libre',bg:'#0D1318',br:'#1B2530',tx:'#5E726B',ico:'☀️'},
+};
+const CAT_COLORS={
+  'Méditation':'#7FD49A','Sport':'#B89AEC','Piano':'#EC93C0','Sciences':'#F0C060',
+  'Langues':'#F0A870','Création':'#F09080','Culture':'#7FD4B5','Lecture':'#B8ADEC',
+  'Droit/Finance':'#A8DA88','Dev perso':'#F0CC78','Trading':'#3FE0D0',
+  'IA & Algèbre':'#97CE4C','Prog. système':'#3FE0D0',
+};
+
+const SI={
+  'Réveil + méditation':{obj:'Ancrer une routine matinale intentionnelle',prog:'10 min dès le réveil : body scan (scanner le corps des pieds à la tête) puis respiration 4-7-8 (inspire 4s, retiens 7s, expire 8s × 4 cycles). Pas de téléphone avant.',ress:'Insight Timer · Podcast "Méditer avec Christophe André"',tip:'5 minutes quotidiennes > 30 minutes une fois. La constance prime sur la durée.',tags:['Mental','Routine']},
+  'Trading':{obj:'Exécuter son plan avec discipline',prog:'1h30-2h30 : analyse marché, vérification niveaux clés, exécution si signal présent selon plan backtesté 20 ans. Journalisation systématique : entrée, sortie, raison, état émotionnel.',ress:'TradingView · Journal de trading',tip:'Pas dans le bon état d\'esprit = passer son tour. Toujours.',tags:['Finance','Discipline']},
+  'Sport — musculation':{obj:'Force et masse sans matériel',prog:'Échauffement 5 min → 3×15 pompes (standard puis diamant) → 3×20 squats → 3×10 tractions → 3×30s gainage. +1 répétition chaque semaine.',ress:'Freeletics · YouTube "Tibo InShape débutant"',tip:'Les muscles se construisent pendant le sommeil. Dors et hydrate-toi.',tags:['Corps','Force']},
+  'Sport — cardio HIIT':{obj:'Endurance cardiovasculaire',prog:'20 min : échauffement 3 min → 10 rounds 30s effort max / 30s repos → retour calme. Burpees, mountain climbers, sprints sur place.',ress:'Nike Training Club · Chrono Tabata',tip:'Si tu peux parler normalement, ce n\'est pas assez intense. Ne fais pas de HIIT le soir.',tags:['Cardio','Énergie']},
+  'Sport — mobilité':{obj:'Souplesse, prévention, récupération',prog:'30 min yoga : chat-vache → salutation au soleil ×3 → guerrier I+II → pigeon (2 min/côté) → torsion → savasana 5 min.',ress:'YouTube "Yoga with Adriene" (sous-titres FR) · App Down Dog',tip:'Ne force jamais jusqu\'à la douleur. 5 min/jour > 1h une fois.',tags:['Récupération','Souplesse']},
+  'Piano':{obj:'Bases du clavier et premières mélodies',prog:'S1 : position des mains, touches Do→Si, gamme de Do majeur séparément, Hanon n°1 lentement. Objectif fin S1 : "Au clair de la lune" main droite.',ress:'Simply Piano (7j gratuit) · YouTube "Piano en 2 semaines"',tip:'Joue toujours très lentement d\'abord. 20 min conscientes > 2h mécaniques.',tags:['Musique','Motricité']},
+  'Anglais':{obj:'Niveau B1 oral et écrit',prog:'10 min Duolingo + 20 min série VO sous-titres EN. 1×/semaine : parler 10 min à voix haute, enregistrer, réécouter.',ress:'Duolingo · Netflix VO · Anki · "English with Lucy"',tip:'L\'immersion bat la grammaire. Passe tout en anglais : musique, YouTube, podcasts.',tags:['Langue','Communication']},
+  'Lecture':{obj:'1 livre par semaine avec rétention maximale',prog:'S1 : "Apprendre à apprendre" (Barbara Oakley). Lecture active : crayon en main, résume chaque chapitre dans tes propres mots. 3 idées retenues par session.',ress:'Notion (tes notes) · 12min app',tip:'Lis en mode avion. 20 min avant de dormir = consolidation nocturne garantie.',tags:['Concentration','Mémoire']},
+  'Sciences — Physique quantique':{obj:'Principes fondamentaux du monde subatomique',prog:'S1 : quantum d\'énergie (Planck) · dualité onde-corpuscule · fentes de Young · incertitude d\'Heisenberg. Dessine chaque concept avec un schéma.',ress:'"Science étonnante" (YouTube) · "Six Easy Pieces" de Feynman · "La science CQFD"',tip:'Accepte les règles du jeu plutôt que de tout vouloir visualiser classiquement.',tags:['Physique','Théorie']},
+  'Sciences — Espace & Cosmologie':{obj:'Origine et structure de l\'univers',prog:'S1 : Big Bang chronologie · formation des galaxies · trous noirs · matière noire. Crée une frise chronologique de l\'univers.',ress:'"Kurzgesagt" (YouTube, sous-titres FR) · "Choses à Savoir Sciences"',tip:'Note chaque fait qui t\'émerveille. L\'émerveillement ancre la mémoire.',tags:['Cosmologie','Univers']},
+  'Sciences — Neurosciences':{obj:'Fonctionnement du cerveau et de la mémoire',prog:'S1 : neurone et synapse · plasticité neuronale · 4 phases mémoire (encodage→stockage→consolidation→rappel) · rôle du sommeil.',ress:'"Le cerveau" de David Eagleman · "Passé Sauvage" (YouTube)',tip:'Ces notions optimisent directement tous tes autres apprentissages.',tags:['Cerveau','Mémoire']},
+  'Sciences — Biologie & Chimie':{obj:'Bases du vivant et de la matière',prog:'S1 bio : cellule eucaryote complète (dessine et légende). S1 chimie : 20 premiers éléments · liaisons covalentes vs ioniques.',ress:'Khan Academy Biology/Chemistry · "Primum Non Nocere" (YouTube)',tip:'Schématise tout — un dessin annoté s\'ancre 5× plus durablement qu\'un texte.',tags:['Biologie','Chimie']},
+  'Maths — Algèbre':{obj:'Équations et fonctions fondamentales',prog:'S1 : équations 1er degré · systèmes 2 équations · inéquations. 30 min Khan Academy + 15 min problèmes concrets (budget, planning).',ress:'Khan Academy · Photomath · "Maths en poche"',tip:'Rate, corrige minutieusement, recommence. L\'erreur EST le processus.',tags:['Algèbre','Logique']},
+  'Maths — Géométrie':{obj:'Espace, formes et raisonnement spatial',prog:'S1 : triangles, cercle et Pi, théorème de Pythagore avec démonstration. S2 : trigonométrie.',ress:'Khan Academy Geometry · GeoGebra (visualisation interactive)',tip:'GeoGebra rend la géométrie intuitive — utilise-le à chaque notion.',tags:['Géométrie','Espace']},
+  'Maths — Probabilités & Stats':{obj:'Comprendre le hasard et analyser les données',prog:'S1 : probabilités de base · loi des grands nombres. S2 : distributions. S3 : statistiques descriptives.',ress:'Khan Academy Statistics · "3Blue1Brown Statistics"',tip:'Expérimente avec des dés et des cartes — la proba se comprend en jouant.',tags:['Probabilités','Données']},
+  'Programmation — Bases Python':{obj:'Premiers programmes fonctionnels',prog:'S1 : VSCode + Python · variables et types · conditions · boucles. Projet : calculateur de budget quotidien automatique.',ress:'freeCodeCamp · Python.org · "Grafikart" (YouTube FR)',tip:'Code chaque jour même 20 min. Tape toi-même — ne copie jamais.',tags:['Python','Tech']},
+  'Programmation — Web HTML/CSS':{obj:'Créer des pages web de A à Z',prog:'S1 : structure HTML sémantique. S2 : CSS et box model. S3 : flexbox et responsive. S4 : ton site portfolio.',ress:'freeCodeCamp Web · MDN Docs',tip:'Construis quelque chose de réel à chaque session.',tags:['Web','HTML']},
+  'Dessin — Fondamentaux':{obj:'Maîtriser le trait et l\'observation',prog:'Méthode Draw a Box. S1 : 100 lignes droites depuis l\'épaule + 50 ellipses + plans en perspective simple.',ress:'drawabox.com · "Proko" (YouTube) · Carnet A5 + HB et 2B',tip:'Dessine DEPUIS L\'ÉPAULE. Accepte que les premières semaines soient laides.',tags:['Dessin','Art']},
+  'Dessin — Perspective':{obj:'Représenter l\'espace en 3D',prog:'S1 : 1 point de fuite. S2 : 2 points. S3 : 3 points. S4 : intérieurs et bâtiments.',ress:'"Alphonso Dunn perspective" (YouTube)',tip:'La perspective est une règle mathématique — pas du talent.',tags:['Perspective','Art']},
+  'Création — Tirelire intelligente':{obj:'Concevoir et prototyper sa première invention',prog:'S1 : schéma fonctionnel papier + liste composants + maquette carton. S2 : test Arduino. S3 : intégration capteur + LCD. S4 : boîtier bois.',ress:'Arduino.cc · "Heliox" (YouTube) · AliExpress',tip:'Semaine 1 = un schéma clair sur papier. Rien de plus, rien de moins.',tags:['Invention','Arduino']},
+  'Création — Électronique de base':{obj:'Comprendre et câbler ses premiers circuits',prog:'S1 : loi d\'Ohm · LED sur breadboard · bouton poussoir. S2 : capteurs. S3 : Arduino.',ress:'"EEVblog" (YouTube) · Livre "Make: Electronics"',tip:'Le kit Arduino débutant (30€) est l\'investissement le plus rentable du mois.',tags:['Électronique','Circuits']},
+  'Joinery — Assemblage bois':{obj:'Assembler sans colle ni vis',prog:'S1 : pont de Vinci avec bâtonnets de glace (30 min). S2 : tenon-mortaise en carton. S3 : bois récupéré. S4 : Kumiko japonais.',ress:'"Leonardo da Vinci bridge sticks" (YouTube) · "Japanese joinery beginner"',tip:'Commence avec des bâtonnets de glace — résultat immédiat et très satisfaisant.',tags:['Artisanat','Bois']},
+  'Droit — Droits du salarié':{obj:'Connaître et défendre ses droits',prog:'S1 : types de contrats · durée légale · heures sup · congés. S2 : rupture de contrat. S3 : droits syndicaux.',ress:'Service-public.fr · "Legavox" (YouTube)',tip:'Connais tes droits avant d\'en avoir besoin. Service-public.fr = référence officielle.',tags:['Droit','Travail']},
+  'Finance — Budget personnel':{obj:'Maîtriser son argent au quotidien',prog:'S1 : noter toutes les dépenses de la semaine · règle 50/30/20 · tableau de bord budget dans Notion.',ress:'"Heu?reka" (YouTube) · Bankin\' · "L\'éducation financière" Kiyosaki',tip:'Note tout pendant 7 jours. La prise de conscience précède toujours le changement.',tags:['Budget','Finance']},
+  'Finance — Investissement':{obj:'Comprendre les marchés et commencer à investir',prog:'S1 : classes d\'actifs · ETF · DCA. S2 : fiscalité (PEA). S3 : construire un portefeuille.',ress:'"Heu?reka" · "Investir en bourse" de Matthieu Louvet · Finary',tip:'Comprends pendant 2-3 mois avant d\'investir. DCA + ETF monde > 80% des gérants sur 10 ans.',tags:['Investissement','Bourse']},
+  'Philosophie — Anciens Grecs':{obj:'Fondements de la pensée occidentale',prog:'S1 : Socrate (maïeutique, procès, mort) · Platon et la théorie des Idées · allégorie de la caverne.',ress:'"Les Chemins de la philosophie" (France Culture) · "Monsieur Phi" (YouTube)',tip:'La philosophie se pratique — note tes propres réflexions après chaque lecture.',tags:['Philosophie','Humanités']},
+  'Philosophie — Philosophie moderne':{obj:'Grands systèmes de pensée des 17-20e siècles',prog:'S1 : Descartes (doute méthodique, cogito). S2 : Kant. S3 : Nietzsche. S4 : Sartre.',ress:'"Les Chemins de la philosophie" · "Histoire de la philosophie" de Luc Ferry',tip:'Comprends d\'abord chaque thèse de l\'intérieur avant de la critiquer.',tags:['Philosophie','Modernité']},
+  'Psychologie — Biais cognitifs':{obj:'Identifier ses biais et comprendre le comportement',prog:'S1 : 6 principes Cialdini (réciprocité, engagement, preuve sociale, autorité, sympathie, rareté). Repère-les dans 3 pubs et 2 conversations.',ress:'"Influence et Manipulation" de Cialdini · "Psykonnect" (YouTube)',tip:'Applique immédiatement à ta vie. La psychologie utile est celle que tu vis.',tags:['Psychologie','Biais']},
+  'Culture générale — Histoire':{obj:'Comprendre les patterns de l\'histoire humaine',prog:'S1 : Empire Romain (fondation, Pax Romana, chute). S2 : Révolution française. S3 : Guerres mondiales.',ress:'"Nota Bene" (YouTube) · "Au Cœur de l\'Histoire" (podcast)',tip:'Relie toujours l\'histoire au présent — c\'est ce qui la rend utile.',tags:['Histoire','Culture']},
+  'Culture générale — Cinéma':{obj:'Développer une vraie culture cinématographique',prog:'S1 : langage cinéma (plan, séquence, montage) · 2 films essentiels + analyse 3 points chacun.',ress:'"Blow Up ARTE" (YouTube) · Letterboxd · "Like Stories of Old"',tip:'Regarde en VO sous-titrée EN — double bénéfice avec l\'anglais.',tags:['Cinéma','Art']},
+  'Bien parler / Rhétorique':{obj:'S\'exprimer avec clarté et conviction',prog:'S1 : 3 piliers d\'Aristote (éthos, logos, pathos) · structure discours. Exo : 5 min enregistré, réécoute.',ress:'"Convaincre en moins de 2 min" · TEDx · Speeko',tip:'Enregistre-toi régulièrement. Ta voix est un muscle qui se travaille.',tags:['Éloquence','Communication']},
+  'Échecs — Tactique':{obj:'Vision tactique et pensée stratégique',prog:'S1 : règles complètes · valeurs pièces · 3 ouvertures. Quotidien : 15 min puzzles + 1 partie IA.',ress:'Chess.com · Lichess.org · "GothamChess" (YouTube)',tip:'15 min de puzzles/jour > 2h de parties sans analyse.',tags:['Stratégie','Logique']},
+  'Danse — Fondamentaux':{obj:'Rythme et coordination corporelle',prog:'S1 : trouver le tempo · running man + step touch. Objectif : enchaîner les 2 pas sur 1 chanson.',ress:'"MihranTV" (YouTube) · Just Dance · "Salsa Kings"',tip:'Danse devant un miroir. Être ridicule seul chez toi = apprendre vite.',tags:['Corps','Rythme']},
+  'Cryptographie — Bases':{obj:'Comprendre comment les données sont sécurisées',prog:'S1 : chiffrement César · symétrique (AES) vs asymétrique (RSA) · clé publique/privée. S2 : hashage SHA-256.',ress:'"Computerphile" (YouTube) · Khan Academy Cryptography',tip:'La crypto est partout (HTTPS, WhatsApp, carte bancaire). La comprendre te rend plus conscient.',tags:['Sécurité','Tech']},
+  'Intelligence Artificielle':{obj:'Comprendre réellement comment l\'IA fonctionne',prog:'S1 : réseau de neurones · descente de gradient · ML vs DL vs IA générale. S2 : NLP et LLMs.',ress:'"3Blue1Brown Neural Networks" (OBLIGATOIRE) · "L\'IA par les maths" de Lê Nguyên Hoang',tip:'3Blue1Brown d\'abord. L\'intuition géométrique avant les équations.',tags:['IA','Tech']},
+  'Deep Learning théorique':{obj:'Comprendre le "pourquoi" mathématique derrière l\'apprentissage — Pilier 2 de ta trajectoire IA',prog:'S2 : backpropagation expliquée pas à pas (calcul des gradients couche par couche) · fonctions d\'activation (ReLU, sigmoid, tanh) et pourquoi elles existent · optimisation par descente de gradient stochastique (SGD, Adam). Reprends les réseaux de neurones de S1 et va plus loin dans les maths.',ress:'"3Blue1Brown — Backpropagation calculus" (essentiel) · "Neural Networks and Deep Learning" de Michael Nielsen (livre gratuit en ligne) · cours CS231n Stanford (vidéos gratuites)',tip:'Ne saute pas les maths même si c\'est dense — c\'est la fondation de TOUT ton objectif final. Refais les calculs à la main au moins une fois.',tags:['IA','Deep Learning','Pilier 2']},
+  'Algèbre linéaire numérique':{obj:'La base mathématique de tout calcul matriciel IA/quantique — Pilier 4 de ta trajectoire',prog:'S2 : vecteurs et espaces vectoriels · matrices et opérations (produit, transposée, inverse) · déterminant et son sens géométrique · valeurs propres et vecteurs propres (eigenvalues/eigenvectors — fondamental pour PCA et quantique). Pratique avec NumPy : manipuler des matrices en Python.',ress:'"3Blue1Brown — Essence of Linear Algebra" (série complète, OBLIGATOIRE) · Khan Academy Linear Algebra · NumPy quickstart (documentation officielle)',tip:'La série 3Blue1Brown sur l\'algèbre linéaire est probablement la ressource la plus importante de tout ton parcours technique — regarde-la avec un carnet pour prendre des notes.',tags:['Maths','Algèbre','Pilier 4']},
+  'Programmation — C/C++':{obj:'Gestion mémoire et cycles CPU — Pilier 3, fondation de tout calcul scientifique performant',prog:'S2 : installation environnement (g++ / VSCode) · syntaxe de base C++ vs Python (typage statique, compilation) · pointeurs et adresses mémoire (le concept clé) · différence stack vs heap. Petit projet : réécrire ton calculateur de budget Python en C++.',ress:'"Learn C++" sur learncpp.com (gratuit, référence) · YouTube "The Cherno C++ Series" · Compiler Explorer (godbolt.org) pour visualiser',tip:'Les pointeurs cassent la tête à tout le monde au début — code des petits exemples, dessine la mémoire sur papier (cases avec adresses et valeurs).',tags:['C++','Tech','Pilier 3']},
+  'Sophrologie & Hypnose':{obj:'Relaxation profonde et qualité du sommeil',prog:'20-30 min avant de dormir. Sophrologie : Jacobson (contraction-décontraction) + visualisation. Auto-hypnose : fixation d\'un point + suggestion positive.',ress:'"Pleine Vie Sophrologie" (YouTube) · App Morphée',tip:'Pratique à heure fixe, chambre sombre. Améliore directement le trading de nuit.',tags:['Relaxation','Sommeil']},
+  'Récap semaine':{obj:'Consolider les apprentissages et préparer S2',prog:'1h : relecture notes Notion · identification acquis vs flou · mise à jour progression · 3 priorités S2 · planning pour Claude.',ress:'Tes notes Notion · Méthode Weekly Review',tip:'Sans révision, 70% des apprentissages disparaissent en 24h (Ebbinghaus). Ce récap EST la semaine.',tags:['Révision','Organisation']},
+  'Taff':{obj:'Optimiser les trajets',prog:'30 min trajet × 2 = podcast éducatif. Rotation : lundi=sciences, mardi=histoire, jeudi=philo, vendredi=anglais.',ress:'France Culture · Spotify · Pocket Casts',tip:'60 min/jour de taff = 5h d\'apprentissage passif par semaine. Ne gaspille aucun trajet.',tags:['Optimisation','Trajet']},
+  'Repas':{obj:'Récupérer et nourrir correctement le cerveau',prog:'Manger sans écran. Protéines le matin, glucides complexes à midi. Éviter sucres rapides en journée.',ress:'App Yazio',tip:'Sucres rapides = effondrement cognitif 2h après. Priorité aux protéines.',tags:['Nutrition','Récupération']},
+  'Temps libre':{obj:'Récupérer et laisser le cerveau intégrer',prog:'Vrai temps libre sans objectif d\'apprentissage. Amis, musique, balade, films, rien. Biologiquement nécessaire.',ress:'Ce que tu veux.',tip:'Le cerveau consolide les apprentissages pendant le repos. Ce n\'est jamais du temps perdu.',tags:['Équilibre','Récupération']},
+  'Sommeil':{obj:'Récupérer profondément et consolider',prog:'Routine : sophrologie 20 min → chambre 18°C → obscurité totale. Post-trading (2h30) : retour au lit immédiat, pas de téléphone.',ress:'Sleep Cycle · Masque de sommeil · "Pourquoi nous dormons" de Walker',tip:'Le sommeil est le facteur n°1 de la mémorisation. Ne le sacrifie jamais.',tags:['Sommeil','Santé']},
+  'Prépa / trajet':{obj:'Optimiser le temps de trajet',prog:'Prépare tes affaires la veille. Trajet = podcast éducatif. Mode avion, pas de réseaux sociaux.',ress:'Pocket Casts · France Culture',tip:'30 min × 2 trajets = 1h d\'apprentissage passif gratuit par jour de taff.',tags:['Organisation','Efficacité']},
+};
+
+const WEEKS=[
+  {key:'s1',label:'Semaine 1',dates:'16-22 juin',active:true,days:[{key:'lun',label:'Lun',date:'16 juin',rest:false,events:[
+      {t:'1h30',d:60,n:'Trading',c:'trade'},{t:'2h30',d:240,n:'Sommeil',c:'sleep'},
+      {t:'6h30',d:30,n:'Réveil + méditation',c:'med'},{t:'7h00',d:45,n:'Sport — musculation',c:'sport'},
+      {t:'7h45',d:45,n:'Repas + prépa',c:'meal'},
+      {t:'8h30',d:60,n:'Algèbre linéaire numérique',c:'ai'},
+      {t:'9h30',d:60,n:'Deep Learning théorique',c:'ai'},
+      {t:'10h30',d:60,n:'Programmation — C/C++',c:'lowlevel'},
+      {t:'11h30',d:30,n:'Anglais',c:'lang'},
+      {t:'12h00',d:45,n:'Repas',c:'meal'},
+      {t:'12h45',d:60,n:'Lecture',c:'read'},
+      {t:'13h45',d:30,n:'Droit — Droits du salarié',c:'law'},
+      {t:'14h15',d:30,n:'Psychologie — Biais cognitifs',c:'dev'},
+      {t:'14h45',d:45,n:'Création — Tirelire intelligente',c:'creat'},
+      {t:'15h30',d:30,n:'Prépa / trajet',c:'meal'},
+      {t:'16h00',d:255,n:'Taff',c:'taff'},
+      {t:'20h15',d:45,n:'Repas + récup',c:'meal'},
+      {t:'21h00',d:30,n:'Culture générale — Histoire',c:'cult'},
+      {t:'21h30',d:60,n:'Sommeil',c:'sleep'}
+    ]},
+    {key:'mar',label:'Mar',date:'17 juin',rest:false,events:[
+      {t:'1h30',d:60,n:'Trading',c:'trade'},{t:'2h30',d:240,n:'Sommeil',c:'sleep'},
+      {t:'6h30',d:30,n:'Réveil + méditation',c:'med'},{t:'7h00',d:30,n:'Sport — cardio HIIT',c:'sport'},
+      {t:'7h30',d:30,n:'Repas + prépa',c:'meal'},
+      {t:'8h00',d:60,n:'Algèbre linéaire numérique',c:'ai'},
+      {t:'9h00',d:60,n:'Prépa / trajet',c:'meal'},
+      {t:'10h00',d:240,n:'Taff',c:'taff'},
+      {t:'14h00',d:30,n:'Repas + récup',c:'meal'},
+      {t:'14h30',d:30,n:'Piano',c:'piano'},
+      {t:'15h00',d:30,n:'Anglais',c:'lang'},
+      {t:'15h35',d:25,n:'Trading',c:'trade'},
+      {t:'16h00',d:60,n:'Lecture',c:'read'},
+      {t:'17h00',d:60,n:'Programmation — C/C++',c:'lowlevel'},
+      {t:'18h00',d:30,n:'Philosophie — Anciens Grecs',c:'cult'},
+      {t:'18h30',d:30,n:'Création — Tirelire intelligente',c:'creat'},
+      {t:'19h00',d:45,n:'Repas',c:'meal'},
+      {t:'19h45',d:30,n:'Culture générale — Cinéma',c:'cult'},
+      {t:'20h15',d:30,n:'Deep Learning théorique',c:'ai'},
+      {t:'20h45',d:30,n:'Sophrologie & Hypnose',c:'med'},
+      {t:'21h15',d:75,n:'Temps libre',c:'free'},
+      {t:'22h30',d:60,n:'Sommeil',c:'sleep'}
+    ]},
+    {key:'mer',label:'Mer ★',date:'18 juin',rest:true,events:[
+      {t:'1h30',d:60,n:'Trading',c:'trade'},{t:'2h30',d:240,n:'Sommeil',c:'sleep'},
+      {t:'6h30',d:30,n:'Réveil + méditation',c:'med'},{t:'7h00',d:60,n:'Sport — musculation',c:'sport'},
+      {t:'8h00',d:30,n:'Repas',c:'meal'},
+      {t:'8h30',d:60,n:'Piano',c:'piano'},
+      {t:'9h30',d:90,n:'Algèbre linéaire numérique',c:'ai'},
+      {t:'11h00',d:60,n:'Deep Learning théorique',c:'ai'},
+      {t:'12h00',d:30,n:'Repas',c:'meal'},
+      {t:'12h30',d:90,n:'Création — Tirelire intelligente',c:'creat'},
+      {t:'14h00',d:60,n:'Joinery — Assemblage bois',c:'creat'},
+      {t:'15h00',d:35,n:'Programmation — C/C++',c:'lowlevel'},
+      {t:'15h35',d:25,n:'Trading',c:'trade'},
+      {t:'16h00',d:30,n:'Anglais',c:'lang'},
+      {t:'16h30',d:30,n:'Dessin — Perspective',c:'creat'},
+      {t:'17h00',d:60,n:'Finance — Investissement',c:'law'},
+      {t:'18h00',d:60,n:'Sciences — Biologie & Chimie',c:'sci'},
+      {t:'19h00',d:45,n:'Repas',c:'meal'},
+      {t:'19h45',d:30,n:'Bien parler / Rhétorique',c:'cult'},
+      {t:'20h15',d:30,n:'Psychologie — Biais cognitifs',c:'dev'},
+      {t:'20h45',d:105,n:'Temps libre',c:'free'},
+      {t:'22h30',d:60,n:'Sommeil',c:'sleep'}
+    ]},
+    {key:'jeu',label:'Jeu',date:'19 juin',rest:false,events:[
+      {t:'1h30',d:60,n:'Trading',c:'trade'},{t:'2h30',d:240,n:'Sommeil',c:'sleep'},
+      {t:'6h30',d:30,n:'Réveil + méditation',c:'med'},{t:'7h00',d:30,n:'Sport — cardio HIIT',c:'sport'},
+      {t:'7h30',d:45,n:'Repas + prépa',c:'meal'},
+      {t:'8h15',d:60,n:'Algèbre linéaire numérique',c:'ai'},
+      {t:'9h15',d:45,n:'Programmation — C/C++',c:'lowlevel'},
+      {t:'10h00',d:30,n:'Anglais',c:'lang'},
+      {t:'10h30',d:60,n:'Lecture',c:'read'},
+      {t:'11h30',d:30,n:'Philosophie — Philosophie moderne',c:'cult'},
+      {t:'12h00',d:30,n:'Repas',c:'meal'},
+      {t:'12h30',d:45,n:'Piano',c:'piano'},
+      {t:'13h15',d:30,n:'Prépa / trajet',c:'meal'},
+      {t:'13h45',d:390,n:'Taff',c:'taff'},
+      {t:'20h15',d:30,n:'Repas + récup',c:'meal'},
+      {t:'20h45',d:30,n:'Sophrologie & Hypnose',c:'med'},
+      {t:'21h15',d:75,n:'Sommeil',c:'sleep'}
+    ]},
+    {key:'ven',label:'Ven',date:'20 juin',rest:false,events:[
+      {t:'1h30',d:60,n:'Trading',c:'trade'},{t:'2h30',d:240,n:'Sommeil',c:'sleep'},
+      {t:'6h30',d:30,n:'Réveil + méditation',c:'med'},{t:'7h00',d:30,n:'Sport — musculation',c:'sport'},
+      {t:'7h30',d:45,n:'Repas + prépa',c:'meal'},
+      {t:'8h15',d:60,n:'Deep Learning théorique',c:'ai'},
+      {t:'9h15',d:45,n:'Programmation — C/C++',c:'lowlevel'},
+      {t:'10h00',d:30,n:'Anglais',c:'lang'},
+      {t:'10h30',d:60,n:'Lecture',c:'read'},
+      {t:'11h30',d:30,n:'Finance — Budget personnel',c:'law'},
+      {t:'12h00',d:30,n:'Repas',c:'meal'},
+      {t:'12h30',d:45,n:'Création — Tirelire intelligente',c:'creat'},
+      {t:'13h15',d:30,n:'Prépa / trajet',c:'meal'},
+      {t:'13h45',d:375,n:'Taff',c:'taff'},
+      {t:'20h00',d:45,n:'Repas + récup',c:'meal'},
+      {t:'20h45',d:30,n:'Culture générale — Histoire',c:'cult'},
+      {t:'21h15',d:75,n:'Sommeil',c:'sleep'}
+    ]},
+    {key:'sam',label:'Sam ★',date:'21 juin',rest:true,events:[
+      {t:'2h30',d:240,n:'Sommeil',c:'sleep'},{t:'6h30',d:30,n:'Réveil + méditation',c:'med'},
+      {t:'7h00',d:60,n:'Sport — mobilité',c:'sport'},{t:'8h00',d:30,n:'Repas',c:'meal'},
+      {t:'8h30',d:60,n:'Piano',c:'piano'},
+      {t:'9h30',d:90,n:'Algèbre linéaire numérique',c:'ai'},
+      {t:'11h00',d:60,n:'Deep Learning théorique',c:'ai'},
+      {t:'12h00',d:30,n:'Repas',c:'meal'},
+      {t:'12h30',d:90,n:'Programmation — C/C++',c:'lowlevel'},
+      {t:'14h00',d:95,n:'Création — Tirelire intelligente',c:'creat'},
+      {t:'15h35',d:25,n:'Trading',c:'trade'},
+      {t:'16h00',d:30,n:'Joinery — Assemblage bois',c:'creat'},
+      {t:'16h30',d:30,n:'Anglais',c:'lang'},
+      {t:'17h00',d:30,n:'Dessin — Perspective',c:'creat'},
+      {t:'17h30',d:30,n:'Droit — Droits du salarié',c:'law'},
+      {t:'18h00',d:30,n:'Bien parler / Rhétorique',c:'cult'},
+      {t:'18h30',d:60,n:'Lecture',c:'read'},
+      {t:'19h30',d:30,n:'Sciences — Biologie & Chimie',c:'sci'},
+      {t:'20h00',d:45,n:'Repas',c:'meal'},
+      {t:'20h45',d:165,n:'Temps libre',c:'free'},
+      {t:'22h30',d:60,n:'Sommeil',c:'sleep'}
+    ]},
+    {key:'dim',label:'Dim',date:'22 juin',rest:false,events:[
+      {t:'2h30',d:240,n:'Sommeil',c:'sleep'},{t:'6h30',d:30,n:'Réveil + méditation',c:'med'},
+      {t:'7h00',d:30,n:'Sport — mobilité',c:'sport'},{t:'7h30',d:60,n:'Repas + prépa',c:'meal'},
+      {t:'8h30',d:30,n:'Prépa / trajet',c:'meal'},
+      {t:'9h00',d:240,n:'Taff',c:'taff'},
+      {t:'13h00',d:45,n:'Repas + récup',c:'meal'},
+      {t:'13h45',d:30,n:'Piano',c:'piano'},
+      {t:'14h15',d:60,n:'Lecture',c:'read'},
+      {t:'15h35',d:25,n:'Trading',c:'trade'},
+      {t:'16h00',d:60,n:'Algèbre linéaire numérique',c:'ai'},
+      {t:'17h00',d:30,n:'Psychologie — Biais cognitifs',c:'dev'},
+      {t:'17h30',d:30,n:'Sophrologie & Hypnose',c:'med'},
+      {t:'18h00',d:90,n:'Récap semaine',c:'dev'},
+      {t:'19h30',d:45,n:'Repas',c:'meal'},
+      {t:'20h15',d:135,n:'Temps libre',c:'free'},
+      {t:'22h30',d:60,n:'Sommeil',c:'sleep'}
+    ]}]},
+  {key:'s2',label:'Semaine 2',dates:'À venir',active:false,days:[]},
+  {key:'s3',label:'Semaine 3',dates:'À venir',active:false,days:[]},
+  {key:'s4',label:'Semaine 4',dates:'À venir',active:false,days:[]},
+];
+
+
+/* ═══ PROJETS — statuts ═══ */
+const PROJ_STATUS={
+  idea:{l:'Idée',color:'var(--cyan)',bg:'rgba(63,224,208,.12)',ico:'💭'},
+  active:{l:'En cours',color:'var(--portal)',bg:'rgba(151,206,76,.12)',ico:'⚡'},
+  done:{l:'Terminé',color:'var(--amber)',bg:'rgba(240,168,48,.12)',ico:'✓'},
+};
+const PROJ_ORDER=['idea','active','done'];
+
+/* ═══ MISSION — 5 piliers Rick ═══ */
+const PILLARS=[
+  {n:'Ingénierie Physique & Confinement',sub:'Construire le corps et le cœur des machines',doms:[
+    {id:'p1a',n:'Architecture des systèmes numériques (ALU, circuits logiques)'},
+    {id:'p1b',n:'Programmation FPGA (Verilog / VHDL)'},
+    {id:'p1c',n:'Électronique de précision (analogique, filtrage)',now:true},
+    {id:'p1d',n:'Cryogénie et thermodynamique'},
+    {id:'p1e',n:'Science des matériaux (polymères, semi-conducteurs)'},
+  ]},
+  {n:'IA & Logique Cognitive',sub:'Le logiciel conscient qui pilote tout',doms:[
+    {id:'p2a',n:'Deep Learning théorique (backprop, activation)',now:true},
+    {id:'p2b',n:'Architectures Transformers & LLMs'},
+    {id:'p2c',n:'Graph Neural Networks (GNN)'},
+    {id:'p2d',n:'Logique formelle & systèmes experts'},
+    {id:'p2e',n:'Apprentissage par renforcement (RL)'},
+  ]},
+  {n:'Calcul Scientifique & Info Hardcore',sub:'La puissance brute pour les simulations',doms:[
+    {id:'p3a',n:'Programmation système (C / C++ / Rust)',now:true},
+    {id:'p3b',n:'Architecture des noyaux (Kernel Engineering)'},
+    {id:'p3c',n:'Calcul haute performance (CUDA / OpenCL)'},
+    {id:'p3d',n:'Compilation & théorie des langages'},
+    {id:'p3e',n:'Assembleur (x86 / ARM)'},
+  ]},
+  {n:'Physique Théorique & Maths Pures',sub:'Le moteur de vérité pour découvrir',doms:[
+    {id:'p4a',n:'Algèbre linéaire numérique',now:true},
+    {id:'p4b',n:'Analyse complexe & Transformée de Fourier'},
+    {id:'p4c',n:'Information quantique (qubits, Grover/Shor)'},
+    {id:'p4d',n:'Géométrie différentielle'},
+    {id:'p4e',n:'Théorie de l\'information (Shannon)'},
+  ]},
+  {n:'Fabrication & Ingénierie Inverse',sub:'Passer du concept à l\'objet physique',doms:[
+    {id:'p5a',n:'CAO / CFAO (modélisation 3D, Fusion 360)'},
+    {id:'p5b',n:'Usinage et métrologie'},
+    {id:'p5c',n:'Ingénierie inverse (hacking de systèmes)'},
+    {id:'p5d',n:'Lithographie et micro-fabrication'},
+    {id:'p5e',n:'Gestion de projet système',now:true},
+  ]},
+];
+
+/* ═══ UTILS ═══ */
+const tM=t=>{const[h,m]=t.replace('h',':').split(':').map(Number);return h*60+(m||0)};
+const mT=m=>{const h=Math.floor(((m%1440)+1440)%1440/60),mm=m%60;return h+'h'+(mm?String(mm).padStart(2,'0'):'00')};
+const ds=d=>d<60?d+'min':Math.floor(d/60)+'h'+(d%60?d%60+'min':'');
+const isLearn=c=>!['sleep','trade','taff','meal','free'].includes(c);
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+
+/* ═══ STATS COMPUTE ═══ */
+function computeWeekStats(wk){
+  const week=WEEKS[wk];
+  if(!week.active||!week.days.length)return null;
+  let totalLearn=0,doneLearn=0,totalMin=0,doneMin=0;
+  const byDay=[],byCat={};
+  week.days.forEach(day=>{
+    let dT=0,dD=0;
+    day.events.forEach(ev=>{
+      if(isLearn(ev.c)){
+        totalLearn++;dT++;totalMin+=ev.d;
+        const key=`${week.key}_${day.key}_${ev.t}`;
+        if(S.done[key]){doneLearn++;dD++;doneMin+=ev.d}
+        const cat=C[ev.c].l;
+        if(!byCat[cat])byCat[cat]={total:0,done:0,min:0,doneMin:0,color:CAT_COLORS[cat]||'#97CE4C',ico:C[ev.c].ico};
+        byCat[cat].total++;byCat[cat].min+=ev.d;
+        if(S.done[key]){byCat[cat].done++;byCat[cat].doneMin+=ev.d}
+      }
+    });
+    byDay.push({label:day.label,total:dT,done:dD});
+  });
+  return {totalLearn,doneLearn,totalMin,doneMin,byDay,byCat,pct:totalLearn>0?Math.round(doneLearn/totalLearn*100):0};
+}
+
+/* ═══ WEEK BAR ═══ */
+let curWeek=0,curDay=0,curTab='planning';
+function buildWbar(){
+  const b=document.getElementById('wbar');b.innerHTML='';
+  WEEKS.forEach((w,i)=>{
+    const btn=document.createElement('button');
+    btn.className='wtab'+(i===curWeek?' on':'')+(w.active?'':' future');
+    btn.textContent=w.label;
+    if(w.active)btn.addEventListener('click',()=>switchWeek(i));
+    b.appendChild(btn);
+  });
+}
+function switchWeek(i){
+  curWeek=i;curDay=0;S.cur={w:i,d:0};save();buildWbar();
+  if(curTab==='planning')renderPlanning();
+  else if(curTab==='stats')renderStats();
+}
+
+/* ═══ TAB SWITCH ═══ */
+function showTab(id,btn){
+  curTab=id;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  btn.classList.add('on');
+  // La barre des semaines ne concerne que le planning et les stats hebdo
+  const wbar=document.querySelector('.wbar');
+  if(wbar)wbar.style.display=(id==='planning'||id==='stats')?'':'none';
+  if(id==='planning')renderPlanning();
+  else if(id==='stats')renderStats();
+  else if(id==='month')renderMonth();
+  else if(id==='projets')renderProjets();
+  else if(id==='roadmap')renderRoadmap();
+}
+
+/* ═══ PLANNING ═══ */
+function renderPlanning(){
+  const week=WEEKS[curWeek];
+  document.getElementById('p-sub').textContent=`> Cycle ${curWeek+1} · ${week.dates}`;
+  if(!week.active||!week.days.length){
+    document.getElementById('p-stats').innerHTML='';
+    document.getElementById('dstrip').innerHTML=`<div style="padding:1.5rem;color:var(--txt3);font-family:var(--fm);font-size:12px">&gt; Cycle non chargé. Reviens avec ton nouveau protocole hebdomadaire.</div>`;
+    document.getElementById('timeline').innerHTML='';
+    document.getElementById('detail').innerHTML='<div class="d-empty"><div class="d-empty-ic">🛸</div><div>Cycle à venir</div></div>';
+    return;
+  }
+  buildDstrip();renderDay();
+}
+function buildDstrip(){
+  const week=WEEKS[curWeek];
+  const s=document.getElementById('dstrip');s.innerHTML='';
+  week.days.forEach((d,i)=>{
+    const hasDone=d.events.some(ev=>isLearn(ev.c)&&S.done[`${week.key}_${d.key}_${ev.t}`]);
+    const btn=document.createElement('button');
+    btn.className='dpill'+(d.rest?' rest':'')+(i===curDay?' on':'')+(hasDone?' has-done':'');
+    btn.innerHTML=`<span class="dp-n">${d.label}</span><span class="dp-d">${d.date}</span><span class="dp-dot"></span>`;
+    btn.addEventListener('click',()=>{curDay=i;S.cur.d=i;save();buildDstrip();renderDay()});
+    s.appendChild(btn);
+  });
+}
+function renderDay(){
+  const week=WEEKS[curWeek],day=week.days[curDay];
+  if(!day)return;
+  const learn=day.events.filter(e=>isLearn(e.c));
+  const done=learn.filter(e=>S.done[`${week.key}_${day.key}_${e.t}`]);
+  const lMin=learn.reduce((a,e)=>a+e.d,0),dMin=done.reduce((a,e)=>a+e.d,0);
+  const tf=day.events.filter(e=>e.c==='taff').reduce((a,e)=>a+e.d,0);
+  const sl=day.events.filter(e=>e.c==='sleep').reduce((a,e)=>a+e.d,0);
+  document.getElementById('p-stats').innerHTML=`
+    <div class="scard"><div class="scard-l">Entraînement</div><div class="scard-v c-portal">${ds(lMin)}</div><div class="scard-s">${ds(dMin)} validé</div></div>
+    <div class="scard"><div class="scard-l">Modules</div><div class="scard-v c-amber">${done.length}<span style="font-size:13px;color:var(--txt3)">/${learn.length}</span></div><div class="scard-s">${learn.length?Math.round(done.length/learn.length*100):0}% complété</div></div>
+    <div class="scard"><div class="scard-l">Taff</div><div class="scard-v">${tf?ds(tf):'—'}</div></div>
+    <div class="scard"><div class="scard-l">Sommeil</div><div class="scard-v c-cyan">${ds(sl)}</div></div>`;
+  const tl=document.getElementById('timeline');tl.innerHTML='';
+  [...day.events].sort((a,b)=>tM(a.t)-tM(b.t)).forEach(ev=>{
+    const ct=C[ev.c],end=mT(tM(ev.t)+ev.d),key=`${week.key}_${day.key}_${ev.t}`;
+    const isDone=!!S.done[key],canChk=isLearn(ev.c),hasNote=!!S.notes[key];
+    const row=document.createElement('div');row.className='trow';
+    row.innerHTML=`<div class="ttime">${ev.t}</div>
+      <div class="tev cat-line${hasNote?' has-note':''}" style="${canChk?'':'opacity:.62'}">
+        <span class="tic">${ct.ico}</span>
+        <div class="tb"><div class="tn">${ev.n}</div><div class="tr">${ev.t} — ${end}</div></div>
+        <div class="td">${ds(ev.d)}</div>
+        ${canChk?`<div class="tchk${isDone?' on':''}" data-key="${key}">${isDone?'✓':''}</div>`:''}
+      </div>`;
+    row.querySelector('.tev').style.borderLeft=`2px solid ${ct.tx}`;
+    const chk=row.querySelector('.tchk');
+    if(chk)chk.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(S.done[key])delete S.done[key];else S.done[key]=1;
+      save();buildDstrip();renderDay();
+      if(document.getElementById('detail').dataset.key===key)showDetail(ev,ct,key);
+      toast(S.done[key]?'✓ Module validé':'Module désactivé');
+    });
+    row.querySelector('.tev').addEventListener('click',()=>showDetail(ev,ct,key));
+    tl.appendChild(row);
+  });
+  document.getElementById('detail').innerHTML='<div class="d-empty"><div class="d-empty-ic">⚗️</div><div>&gt; Sélectionne un créneau<br>pour charger le protocole</div></div>';
+  document.getElementById('detail').dataset.key='';
+}
+function showDetail(ev,ct,key){
+  const sk=SI[ev.n]||{obj:'Créneau dédié.',prog:'—',ress:'—',tip:'—',tags:[]};
+  const end=mT(tM(ev.t)+ev.d),noteVal=S.notes[key]||'';
+  const det=document.getElementById('detail');det.dataset.key=key;
+  det.innerHTML=`
+    <div class="d-cat" style="color:${ct.tx}">${ct.l}</div>
+    <span class="d-ic">${ct.ico}</span>
+    <div class="d-title">${ev.n}</div>
+    <div class="d-time">${ev.t} — ${end} · ${ds(ev.d)}</div>
+    <div class="d-sep"></div>
+    <div class="d-lbl">Objectif</div><div class="d-txt">${sk.obj}</div>
+    <div class="d-sep"></div>
+    <div class="d-lbl">Protocole</div><div class="d-txt">${sk.prog}</div>
+    <div class="d-sep"></div>
+    <div class="d-lbl">Ressources</div><div class="d-txt">${sk.ress}</div>
+    <div class="d-sep"></div>
+    <div class="d-lbl">Note du Conseil</div><div class="d-txt">${sk.tip}</div>
+    <div class="d-tags">${(sk.tags||[]).map(t=>`<span class="d-tag">${t}</span>`).join('')}</div>
+    <div class="d-sep"></div>
+    <div class="d-lbl">// Journal de bord</div>
+    <textarea class="note-area" id="note-in" placeholder="Consigne tes observations, découvertes, blocages...">${noteVal}</textarea>
+    <div class="note-state" id="note-st">[ enregistré ]</div>`;
+  const ta=document.getElementById('note-in');let db;
+  ta.addEventListener('input',()=>{
+    clearTimeout(db);
+    db=setTimeout(()=>{
+      const v=ta.value.trim();
+      if(v)S.notes[key]=ta.value;else delete S.notes[key];
+      save();
+      const st=document.getElementById('note-st');st.classList.add('show');
+      setTimeout(()=>st.classList.remove('show'),1500);
+      buildDstrip();
+    },500);
+  });
+}
+
+/* ═══ STATS SEMAINE ═══ */
+function renderStats(){
+  const week=WEEKS[curWeek];
+  const st=computeWeekStats(curWeek);
+  const el=document.getElementById('stats-content');
+  if(!st){el.innerHTML=`<div class="empty">&gt; Cycle non disponible.<br>Reviens avec ton protocole.</div>`;renderHist(el);return}
+  const circ=2*Math.PI*46,off=circ*(1-st.pct/100);
+  el.innerHTML=`
+  <div class="panel panel-glow">
+    <div class="phead"><div class="ptitle">${week.label} · ${week.dates}</div><div class="pbadge">${st.pct}% complété</div></div>
+    <div class="ringrow">
+      <div class="ring"><svg width="104" height="104" viewBox="0 0 104 104">
+        <circle class="ring-bg" cx="52" cy="52" r="46"/>
+        <circle class="ring-fl" cx="52" cy="52" r="46" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/>
+      </svg><div class="ring-c"><div class="ring-pct">${st.pct}%</div><div class="ring-sub">complété</div></div></div>
+      <div class="ringinfo">
+        <div class="riline"><span class="ri-l">Modules validés</span><span class="ri-v c-portal">${st.doneLearn} / ${st.totalLearn}</span></div>
+        <div class="riline"><span class="ri-l">Temps d'entraînement</span><span class="ri-v c-portal">${ds(st.doneMin)}</span></div>
+        <div class="riline"><span class="ri-l">Temps total prévu</span><span class="ri-v">${ds(st.totalMin)}</span></div>
+        <div class="riline"><span class="ri-l">Modules restants</span><span class="ri-v c-amber">${st.totalLearn-st.doneLearn}</span></div>
+      </div>
+    </div>
+    <div class="sec-h" style="margin-top:0">// Activité par jour</div>
+    <div class="heat" id="heat"></div>
+  </div>
+  <div class="panel">
+    <div class="ptitle" style="margin-bottom:1rem">Répartition par domaine</div>
+    <div class="catbars" id="catbars"></div>
+  </div>
+  <div class="panel">
+    <div class="ptitle" style="margin-bottom:1rem">// Journal de bord — ${week.label}</div>
+    <div class="nrecap" id="nrecap"></div>
+  </div>`;
+  const hm=document.getElementById('heat');
+  st.byDay.forEach(d=>{
+    const p=d.total>0?d.done/d.total:0;
+    const lvl=p===0?'l0':p<.33?'l1':p<.66?'l2':p<1?'l3':'l4';
+    const c=document.createElement('div');c.className='hday';
+    c.innerHTML=`<div class="hlbl">${d.label.replace(' ★','')}</div><div class="hcell ${lvl}" title="${d.done}/${d.total}"></div><div class="hval">${d.done}/${d.total}</div>`;
+    hm.appendChild(c);
+  });
+  const cb=document.getElementById('catbars');
+  Object.entries(st.byCat).sort((a,b)=>b[1].done-a[1].done).forEach(([cat,d])=>{
+    const p=d.total>0?Math.round(d.done/d.total*100):0;
+    const r=document.createElement('div');r.className='cbrow';
+    r.innerHTML=`<span class="cb-i">${d.ico}</span><div class="cb-info"><div class="cb-n">${cat}<span class="cb-c">${d.done}/${d.total} · ${ds(d.doneMin)}/${ds(d.min)}</span></div><div class="cb-track"><div class="cb-fill" style="width:${p}%;background:${d.color}"></div></div></div>`;
+    cb.appendChild(r);
+  });
+  const nr=document.getElementById('nrecap');
+  const notes=[];
+  week.days.forEach(day=>day.events.forEach(ev=>{
+    const k=`${week.key}_${day.key}_${ev.t}`;
+    if(S.notes[k])notes.push({day:day.label.replace(' ★',''),t:ev.t,n:ev.n,txt:S.notes[k],c:ev.c});
+  }));
+  nr.innerHTML=notes.length?notes.map(n=>`<div class="ncard"><div class="nc-h"><span class="nc-day">${n.day}</span><span class="nc-t">${n.t}</span><span class="nc-n">${C[n.c].ico} ${n.n}</span></div><div class="nc-txt">${n.txt.replace(/</g,'&lt;')}</div></div>`).join(''):`<div class="empty">&gt; Aucune entrée. Ouvre un module dans le Protocole pour écrire.</div>`;
+  renderHist(el);
+}
+function renderHist(el){
+  const old=document.getElementById('histsec');if(old)old.remove();
+  const s=document.createElement('div');s.id='histsec';s.className='histsec';
+  s.innerHTML=`<div class="hstitle">// Tous les cycles</div><div class="wkcards" id="wkc"></div>`;
+  el.appendChild(s);
+  const c=document.getElementById('wkc');
+  WEEKS.forEach((w,i)=>{
+    const st=computeWeekStats(i);const card=document.createElement('div');
+    card.className='wkcard'+(i===curWeek?' cur':'');
+    if(st){
+      card.innerHTML=`<div class="wk-w">${w.label}</div><div class="wk-p">${st.pct}%</div><div class="wk-bar"><div class="wk-fl" style="width:${st.pct}%"></div></div><div class="wk-d">${st.doneLearn}/${st.totalLearn} modules · ${ds(st.doneMin)}</div>`;
+      card.addEventListener('click',()=>{switchWeek(i);renderStats()});
+    }else{
+      card.innerHTML=`<div class="wk-w">${w.label}</div><div style="font-family:var(--fm);font-size:12px;color:var(--txt3);margin-top:6px">${w.dates}</div><div style="font-family:var(--fm);font-size:10px;color:var(--txt3);margin-top:4px">Protocole à venir</div>`;
+      card.style.opacity='.55';
+    }
+    c.appendChild(card);
+  });
+}
+
+/* ═══ STATS MOIS ═══ */
+function renderMonth(){
+  const el=document.getElementById('month-content');
+  let totL=0,totD=0,totMin=0,totDMin=0,activeWeeks=0;
+  const weekStats=[];
+  WEEKS.forEach((w,i)=>{
+    const st=computeWeekStats(i);
+    weekStats.push(st);
+    if(st){activeWeeks++;totL+=st.totalLearn;totD+=st.doneLearn;totMin+=st.totalMin;totDMin+=st.doneMin}
+  });
+  const globalPct=totL>0?Math.round(totD/totL*100):0;
+  // Agrégation par catégorie sur tout le mois
+  const monthCat={};
+  WEEKS.forEach((w,i)=>{
+    const st=weekStats[i];if(!st)return;
+    Object.entries(st.byCat).forEach(([cat,d])=>{
+      if(!monthCat[cat])monthCat[cat]={done:0,total:0,doneMin:0,min:0,color:d.color,ico:d.ico};
+      monthCat[cat].done+=d.done;monthCat[cat].total+=d.total;
+      monthCat[cat].doneMin+=d.doneMin;monthCat[cat].min+=d.min;
+    });
+  });
+  el.innerHTML=`
+  <div class="month-grid">
+    <div class="bigstat g1"><div class="bs-l">Progression du cycle</div><div class="bs-v c-portal">${globalPct}%</div><div class="bs-s">${totD} / ${totL} modules validés</div></div>
+    <div class="bigstat g2"><div class="bs-l">Temps d'entraînement</div><div class="bs-v c-cyan">${ds(totDMin)}</div><div class="bs-s">sur ${ds(totMin)} programmés</div></div>
+    <div class="bigstat g3"><div class="bs-l">Semaines actives</div><div class="bs-v c-amber">${activeWeeks}<span style="font-size:16px;color:var(--txt3)">/4</span></div><div class="bs-s">du protocole mensuel</div></div>
+    <div class="bigstat g4"><div class="bs-l">Modules / semaine</div><div class="bs-v c-plasma">${activeWeeks?Math.round(totD/activeWeeks):0}</div><div class="bs-s">moyenne validée</div></div>
+  </div>
+  <div class="panel panel-glow">
+    <div class="ptitle" style="margin-bottom:1.1rem">// Progression par semaine</div>
+    <div class="month-weeks" id="mweeks"></div>
+  </div>
+  <div class="panel">
+    <div class="ptitle" style="margin-bottom:1.1rem">Cumul par domaine — tout le cycle</div>
+    <div class="catbars" id="mcatbars"></div>
+  </div>`;
+  const mw=document.getElementById('mweeks');
+  WEEKS.forEach((w,i)=>{
+    const st=weekStats[i];
+    const row=document.createElement('div');row.className='mw-row';
+    if(st){
+      row.innerHTML=`<div class="mw-lbl">${w.label.replace('Semaine','Sem.')}</div><div class="mw-track"><div class="mw-fill" style="width:${st.pct}%"></div><div class="mw-pct">${st.pct}%</div></div>`;
+    }else{
+      row.innerHTML=`<div class="mw-lbl">${w.label.replace('Semaine','Sem.')}</div><div class="mw-track"><div class="mw-empty-txt">À venir</div></div>`;
+    }
+    mw.appendChild(row);
+  });
+  const mc=document.getElementById('mcatbars');
+  const entries=Object.entries(monthCat).sort((a,b)=>b[1].done-a[1].done);
+  if(entries.length===0){mc.innerHTML=`<div class="empty">&gt; Aucune donnée pour le moment.</div>`}
+  else entries.forEach(([cat,d])=>{
+    const p=d.total>0?Math.round(d.done/d.total*100):0;
+    const r=document.createElement('div');r.className='cbrow';
+    r.innerHTML=`<span class="cb-i">${d.ico}</span><div class="cb-info"><div class="cb-n">${cat}<span class="cb-c">${d.done}/${d.total} · ${ds(d.doneMin)}</span></div><div class="cb-track"><div class="cb-fill" style="width:${p}%;background:${d.color}"></div></div></div>`;
+    mc.appendChild(r);
+  });
+}
+
+/* ═══ PROJETS — rendu ═══ */
+function esc(s){return(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ═══ PROJETS ═══ */
+function renderProjets(){
+  if(!Array.isArray(S.projects))S.projects=[];
+  // Si un projet est ouvert, afficher sa vue détaillée
+  if(S.pcur){
+    const p=S.projects.find(x=>x.id===S.pcur);
+    if(p){renderProjectDetail(p);return}
+    S.pcur=null;
+  }
+  renderProjectsList();
+}
+
+function renderProjectsList(){
+  const el=document.getElementById('projets-content');
+  const projs=S.projects;
+  el.innerHTML=`
+  <div class="proj-add">
+    <input type="text" class="proj-add-input" id="np-title" placeholder="Nom du projet (ex: Tirelire intelligente, Bras robotisé...)" maxlength="80">
+    <textarea class="proj-add-note" id="np-desc" placeholder="Description, objectif... (optionnel)"></textarea>
+    <div class="np-status-pick" id="np-status">
+      ${PROJ_ORDER.map((k,i)=>`<button class="np-st${i===0?' on':''}" data-st="${k}">${PROJ_STATUS[k].ico} ${PROJ_STATUS[k].l}</button>`).join('')}
+    </div>
+    <button class="proj-add-btn" id="np-add">+ Créer le projet</button>
+  </div>
+  <div class="sec-h">// Mes projets <span style="color:var(--txt3)">(${projs.length})</span></div>
+  <div class="proj-cards" id="proj-cards"></div>`;
+
+  // Sélecteur de statut
+  let pickedStatus='idea';
+  el.querySelectorAll('.np-st').forEach(b=>b.addEventListener('click',()=>{
+    el.querySelectorAll('.np-st').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');pickedStatus=b.dataset.st;
+  }));
+  const addP=()=>{
+    const ti=document.getElementById('np-title'),de=document.getElementById('np-desc');
+    const title=ti.value.trim();
+    if(!title){toast('Donne un nom à ton projet');ti.focus();return}
+    S.projects.unshift({id:Date.now(),title,desc:de.value.trim(),status:pickedStatus,items:[]});
+    save();renderProjets();toast('✓ Projet créé');
+  };
+  document.getElementById('np-add').addEventListener('click',addP);
+  document.getElementById('np-title').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addP()}});
+
+  const cards=document.getElementById('proj-cards');
+  if(projs.length===0){
+    cards.innerHTML=`<div class="empty">&gt; Aucun projet pour l'instant.<br>Crée ton premier projet ci-dessus — invention, build, expérience...</div>`;
+    return;
+  }
+  projs.forEach(p=>{
+    const st=PROJ_STATUS[p.status]||PROJ_STATUS.idea;
+    const items=p.items||[];
+    const done=items.filter(i=>i.done).length;
+    const pct=items.length?Math.round(done/items.length*100):0;
+    const card=document.createElement('div');
+    card.className='pcard';
+    card.innerHTML=`
+      <div class="pcard-top">
+        <div class="pcard-badge" style="color:${st.color};background:${st.bg}">${st.ico} ${st.l}</div>
+        <button class="pcard-del" title="Supprimer">✕</button>
+      </div>
+      <div class="pcard-name">${esc(p.title)}</div>
+      ${p.desc?`<div class="pcard-desc">${esc(p.desc)}</div>`:''}
+      ${items.length?`<div class="pcard-prog"><div class="pcard-prog-bar"><div class="pcard-prog-fl" style="width:${pct}%;background:${st.color}"></div></div><span class="pcard-prog-txt">${done}/${items.length}</span></div>`:`<div class="pcard-empty">Aucune étape — clique pour ouvrir</div>`}`;
+    card.addEventListener('click',e=>{
+      if(e.target.closest('.pcard-del'))return;
+      S.pcur=p.id;save();renderProjets();
+    });
+    card.querySelector('.pcard-del').addEventListener('click',e=>{
+      e.stopPropagation();
+      S.projects=S.projects.filter(x=>x.id!==p.id);save();renderProjets();toast('Projet supprimé');
+    });
+    cards.appendChild(card);
+  });
+}
+
+function renderProjectDetail(p){
+  const el=document.getElementById('projets-content');
+  if(!Array.isArray(p.items))p.items=[];
+  const items=p.items;
+  const done=items.filter(i=>i.done).length;
+  const pct=items.length?Math.round(done/items.length*100):0;
+  const st=PROJ_STATUS[p.status]||PROJ_STATUS.idea;
+  el.innerHTML=`
+  <button class="pback" id="pback">← Tous les projets</button>
+  <div class="proj-hero">
+    <div class="pdetail-statusrow" id="pstatus-row">
+      ${PROJ_ORDER.map(k=>`<button class="pst-pill${k===p.status?' on':''}" data-st="${k}" style="${k===p.status?`color:${PROJ_STATUS[k].color};background:${PROJ_STATUS[k].bg};border-color:${PROJ_STATUS[k].color}`:''}">${PROJ_STATUS[k].ico} ${PROJ_STATUS[k].l}</button>`).join('')}
+    </div>
+    <div class="proj-name" id="pd-title" contenteditable="true" spellcheck="false">${esc(p.title)}</div>
+    <div class="proj-desc" id="pd-desc" contenteditable="true" spellcheck="false" data-ph="Ajoute une description...">${esc(p.desc||'')}</div>
+    ${items.length?`<div class="proj-prog">
+      <div class="proj-prog-lbl"><span>Avancement</span><span>${done}/${items.length} étapes</span></div>
+      <div class="proj-prog-bar"><div class="proj-prog-fl" style="width:${pct}%"></div></div>
+    </div>`:''}
+  </div>
+
+  <div class="sec-h">// Étapes & notes</div>
+  <div class="proj-add">
+    <input type="text" class="proj-add-input" id="pi-title" placeholder="Nouvelle étape ou note (ex: Acheter l'Arduino...)" maxlength="120">
+    <textarea class="proj-add-note" id="pi-note" placeholder="Détails... (optionnel)"></textarea>
+    <button class="proj-add-btn" id="pi-add">+ Ajouter</button>
+  </div>
+  <div class="proj-items" id="proj-items"></div>`;
+
+  // Retour
+  document.getElementById('pback').addEventListener('click',()=>{S.pcur=null;save();renderProjets()});
+
+  // Changement de statut
+  el.querySelectorAll('.pst-pill').forEach(b=>b.addEventListener('click',()=>{
+    p.status=b.dataset.st;save();renderProjets();
+  }));
+
+  // Édition titre / desc du projet
+  const tEl=document.getElementById('pd-title');
+  tEl.addEventListener('blur',()=>{const v=tEl.textContent.trim();if(v){p.title=v;save()}else tEl.textContent=p.title});
+  tEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();tEl.blur()}});
+  const dEl=document.getElementById('pd-desc');
+  dEl.addEventListener('blur',()=>{p.desc=dEl.textContent.trim();save()});
+
+  // Ajout d'entrée
+  const addItem=()=>{
+    const ti=document.getElementById('pi-title'),no=document.getElementById('pi-note');
+    const title=ti.value.trim();
+    if(!title){toast('Donne un titre à l\'étape');ti.focus();return}
+    p.items.unshift({id:Date.now(),title,note:no.value.trim(),done:false});
+    save();renderProjets();toast('✓ Ajouté');
+  };
+  document.getElementById('pi-add').addEventListener('click',addItem);
+  document.getElementById('pi-title').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItem()}});
+
+  const list=document.getElementById('proj-items');
+  if(items.length===0){
+    list.innerHTML=`<div class="empty">&gt; Aucune étape. Ajoute la première ci-dessus.</div>`;
+    return;
+  }
+  items.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='proj-item'+(it.done?' done':'');
+    d.dataset.id=it.id;
+    d.innerHTML=`
+      <div class="pi-chk" data-act="toggle">${it.done?'✓':''}</div>
+      <div class="pi-body">
+        <div class="pi-title" data-act="edit-title" contenteditable="true" spellcheck="false">${esc(it.title)}</div>
+        ${it.note||it.editing?`<div class="pi-note" data-act="edit-note" contenteditable="true" spellcheck="false" data-ph="Ajoute une note...">${esc(it.note||'')}</div>`:`<div class="pi-note-add" data-act="add-note">+ ajouter une note</div>`}
+      </div>
+      <button class="pi-del" data-act="del" title="Supprimer">✕</button>`;
+    d.querySelector('[data-act="toggle"]').addEventListener('click',()=>{it.done=!it.done;save();renderProjets();toast(it.done?'✓ Fait !':'Rouvert')});
+    d.querySelector('[data-act="del"]').addEventListener('click',()=>{p.items=p.items.filter(x=>x.id!==it.id);save();renderProjets();toast('Supprimé')});
+    const titleEl=d.querySelector('[data-act="edit-title"]');
+    titleEl.addEventListener('blur',()=>{const v=titleEl.textContent.trim();if(v){it.title=v;save()}else titleEl.textContent=it.title});
+    titleEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();titleEl.blur()}});
+    const addNote=d.querySelector('[data-act="add-note"]');
+    if(addNote)addNote.addEventListener('click',()=>{it.editing=true;save();renderProjets();setTimeout(()=>{const n=document.querySelector(`[data-id="${it.id}"] [data-act="edit-note"]`);if(n)n.focus()},50)});
+    const noteEl=d.querySelector('[data-act="edit-note"]');
+    if(noteEl)noteEl.addEventListener('blur',()=>{it.note=noteEl.textContent.trim();it.editing=false;save();if(!it.note)renderProjets()});
+    list.appendChild(d);
+  });
+}
+
+/* ═══ ROADMAP MISSION ═══ */
+function renderRoadmap(){
+  const el=document.getElementById('roadmap-content');
+  const allDoms=PILLARS.flatMap(p=>p.doms);
+  const doneDoms=allDoms.filter(d=>S.doms[d.id]).length;
+  const globalPct=Math.round(doneDoms/allDoms.length*100);
+  el.innerHTML=`
+  <div class="obj-banner">
+    <div class="obj-label">// Objectif final</div>
+    <div class="obj-title">Construire une <i>IA autonome</i><br>capable d'auto-amélioration</div>
+    <div class="obj-meter">
+      <div class="obj-meter-bar"><div class="obj-meter-fl" style="width:${globalPct}%"></div></div>
+      <div class="obj-meter-txt">${doneDoms} / ${allDoms.length} domaines maîtrisés · ${globalPct}%</div>
+    </div>
+  </div>
+  <div id="pillars"></div>`;
+  const pc=document.getElementById('pillars');
+  PILLARS.forEach((p,i)=>{
+    const doneInP=p.doms.filter(d=>S.doms[d.id]).length;
+    const pPct=Math.round(doneInP/p.doms.length*100);
+    const unlocked=doneInP>0;
+    const div=document.createElement('div');
+    div.className='pillar'+(unlocked?' unlocked':'')+(i===0?' open':'');
+    div.innerHTML=`
+      <div class="pillar-head">
+        <div class="pillar-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="pillar-info"><div class="pillar-name">${p.n}</div><div class="pillar-sub">${p.sub}</div></div>
+        <div class="pillar-meta"><div class="pillar-prog">${pPct}%</div><div class="pillar-chev">▶</div></div>
+      </div>
+      <div class="pillar-body"><div class="pillar-body-in">${p.doms.map(d=>{
+        const on=!!S.doms[d.id];
+        return `<div class="dom"><div class="dom-chk${on?' on':''}" data-dom="${d.id}">${on?'✓':''}</div><div class="dom-n${on?' done':''}">${d.n}</div>${d.now?'<span class="dom-tag now">en cours</span>':'<span class="dom-tag">à venir</span>'}</div>`;
+      }).join('')}</div></div>`;
+    div.querySelector('.pillar-head').addEventListener('click',()=>div.classList.toggle('open'));
+    div.querySelectorAll('.dom-chk').forEach(chk=>{
+      chk.addEventListener('click',e=>{
+        e.stopPropagation();
+        const id=chk.dataset.dom;
+        if(S.doms[id])delete S.doms[id];else S.doms[id]=1;
+        save();renderRoadmap();
+        toast(S.doms[id]?'✓ Domaine débloqué':'Domaine réinitialisé');
+      });
+    });
+    pc.appendChild(div);
+  });
+}
+
+/* ═══ INIT ═══ */
+if(S.cur){curWeek=S.cur.w||0;curDay=S.cur.d||0}
+buildWbar();renderPlanning();
+</script>
+</body>
+</html>
